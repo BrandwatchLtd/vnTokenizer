@@ -32,6 +32,15 @@ public class TokenizerTest {
         );
     }
 
+    @Test
+    public void givenVietnameseThatWouldBeNormalised_whenTokenizing_thenOriginalTokensReturned() {
+        // kỹ would be normalised to kĩ internally
+        checkTokenization(
+                "Direct message để được chúng mình tư vấn kỹ hơn nhé",
+                "Direct","message", "để", "được", "chúng mình", "tư vấn", "kỹ", "hơn", "nhé"
+        );
+    }
+
     private void checkTokenization(String text, String... expectedTokens) {
         List<Token> tokens = tokenizer.tokenize(text);
         List<String> actual = tokens.stream()

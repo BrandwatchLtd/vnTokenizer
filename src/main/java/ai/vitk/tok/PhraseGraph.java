@@ -13,7 +13,7 @@ import ai.vitk.type.*;
 
 public class PhraseGraph implements Serializable {
   private boolean verbose = false;
-  private String[] syllables;
+  private Syllable[] syllables;
   private int n;
   private Dictionary dictionary;
   
@@ -34,7 +34,9 @@ public class PhraseGraph implements Serializable {
   
   public synchronized void makeGraph(String phrase) {
     edges.clear();
-    syllables = textNormalizer.normalize(phrase).split("\\s+");
+    syllables = Arrays.stream(phrase.split("\\s+"))
+      .map(Syllable::new)
+      .toArray(Syllable[]::new);
     n = syllables.length;
     if (n > 128) {
       System.out.println("WARNING: Phrase too long (>= 128 syllables), tokenization may be slow...");
@@ -44,7 +46,7 @@ public class PhraseGraph implements Serializable {
       edges.put(j, new LinkedList<>());
     }
     for (int i = 0; i < n; i++) {
-      String token = syllables[i];
+      String token = syllables[i].normalised;
       int j = i;
       while (j < n) {
         if (dictionary.hasWord(token)) {
@@ -52,7 +54,7 @@ public class PhraseGraph implements Serializable {
         }
         j++;
         if (j < n) {
-          token = token + ' ' + syllables[j];
+          token = token + ' ' + syllables[j].normalised;
         }
       }
     }
@@ -76,8 +78,8 @@ public class PhraseGraph implements Serializable {
     if (verbose) {
       if (allPaths.size() > 16) {
         StringBuilder phrase = new StringBuilder();
-        for (String syllable : syllables) {
-          phrase.append(syllable);
+        for (Syllable syllable : syllables) {
+          phrase.append(syllable.original);
           phrase.append(' ');
         }
         System.out.printf("This phrase is too ambiguous, giving %d shortest paths!\n\t%s\n",
@@ -103,10 +105,10 @@ public class PhraseGraph implements Serializable {
       // get the token from a[j] to a[j+1] (exclusive)
       tok[j] = new StringBuilder();
       i = a[j];
-      tok[j].append(syllables[i]);
+      tok[j].append(syllables[i].original);
       for (int k = a[j]+1; k < a[j+1]; k++) {
         tok[j].append(' ');
-        tok[j].append(syllables[k]);
+        tok[j].append(syllables[k].original);
       }
     }
     List<String> result = new LinkedList<String>();
@@ -203,6 +205,16 @@ public class PhraseGraph implements Serializable {
         sb = sb.replace(idx, matcher.end(), String.valueOf(ymap.get(sb.charAt(idx))));
       }
       return sb.toString();
+    }
+  }
+
+  private class Syllable {
+    private final String original;
+    private final String normalised;
+
+    Syllable(String original) {
+      this.original = original;
+      this.normalised = textNormalizer.normalize(original);
     }
   }
   
