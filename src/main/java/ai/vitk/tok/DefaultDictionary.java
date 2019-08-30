@@ -8,7 +8,8 @@ import java.util.List;
  * <p>
  */
 public class DefaultDictionary implements Dictionary, Serializable {
-  private Lexicon lexicon = new Lexicon().load(Lexicon.class.getResourceAsStream("/tok/lexicon.xml"))
+    
+  private final Lexicon lexicon = new Lexicon().load(Lexicon.class.getResourceAsStream("/tok/lexicon.xml"))
       .additionalLexicon("/tok/provinces.txt").additionalLexicon("/tok/districts.txt")
       .additionalLexicon("/tok/extra.txt");
   
@@ -17,8 +18,4 @@ public class DefaultDictionary implements Dictionary, Serializable {
     return lexicon.hasWord(word);
   }
   
-  public void addWords(List<String> words) {
-    for (String word: words)
-      lexicon.addWord(word);
-  }
 }

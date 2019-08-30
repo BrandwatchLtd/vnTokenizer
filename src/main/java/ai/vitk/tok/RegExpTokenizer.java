@@ -1,8 +1,11 @@
 package ai.vitk.tok;
 
-import ai.vitk.util.TokenShape;
+import ai.vitk.tok.PhraseGraph.GraphPaths;
 import ai.vitk.type.Token;
+import ai.vitk.util.TokenShape;
+
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.LinkedList;
@@ -21,25 +24,23 @@ import java.util.regex.Pattern;
 public class RegExpTokenizer implements Serializable {
   static boolean verbose = false;
   static Logger logger = Logger.getLogger(RegExpTokenizer.class.getName());
-  private PhraseGraph graph = new PhraseGraph();
-  static List<ai.vitk.type.Pattern> patterns = new LinkedList<>();
+  private final PhraseGraph graph;
+  static final List<ai.vitk.type.Pattern> patterns = new ArrayList<>(TokenShape.COMMON_PATTERNS);
   static {
-    patterns.addAll(TokenShape.COMMON_PATTERNS);
     Collections.sort(patterns, Comparator.reverseOrder());
   }
 
-  static List<ai.vitk.type.Pattern> extendedPatterns = new LinkedList<>();
+  static final List<ai.vitk.type.Pattern> extendedPatterns = new ArrayList<>(TokenShape.EXTENDED_PATTERNS);
   static {
-    extendedPatterns.addAll(TokenShape.EXTENDED_PATTERNS);
     Collections.sort(extendedPatterns, Comparator.reverseOrder());
   }
 
-  /**
-   * Sets the dictionary used in this tokenizer.
-   * @param dictionary
-   */
-  public void setDictionary(Dictionary dictionary) {
-    graph = new PhraseGraph(dictionary);
+  public RegExpTokenizer(final PhraseGraph graph) {
+      this.graph = graph;
+  }
+  
+  public RegExpTokenizer(final Dictionary dictionary) {
+      this(new PhraseGraph(dictionary));
   }
   
   /**
@@ -72,11 +73,9 @@ public class RegExpTokenizer implements Serializable {
       if (!regexp.equals("PHRASE")) {
         tokens.add(new Token("0", token.trim()).setLemma(regexp));
       } else {
-        graph.makeGraph(token.trim());
-        List<LinkedList<Integer>> paths = graph.shortestPaths();
+        final GraphPaths paths = graph.shortestPaths(token.trim());
         if (!paths.isEmpty()) {
-          LinkedList<Integer> selectedPath = paths.get(paths.size() - 1);
-          List<String> words = graph.words(selectedPath);
+          List<String> words = paths.words(paths.size() - 1);
           for (String word : words) {
             tokens.add(new Token("0", word).setLemma("WORD"));
           }
@@ -98,7 +97,7 @@ public class RegExpTokenizer implements Serializable {
    * @param text a text (plain sentence)
    * @return a list of tokens
    */
-  public synchronized static List<Token> split(String text) {
+  public static List<Token> split(String text) {
     text = text.trim();
     if (text.isEmpty())
       return new LinkedList<>();
@@ -141,7 +140,7 @@ public class RegExpTokenizer implements Serializable {
    * @param text a text (plain sentence)
    * @return a list of segmentations, each is a list of tokens
    */
-  public synchronized List<List<Token>> iterate(String text) {
+  public List<List<Token>> iterate(String text) {
     text = text.trim();
     if (text.isEmpty())
       return new LinkedList<>();
@@ -168,13 +167,11 @@ public class RegExpTokenizer implements Serializable {
         ts.add(t);
         middle.add(ts);
       } else {
-        graph.makeGraph(token.trim());
-        List<LinkedList<Integer>> paths = graph.shortestPaths();
+        final GraphPaths paths = graph.shortestPaths(token.trim());
         if (!paths.isEmpty()) {
           for (int i = 0; i < paths.size(); i++) {
             List<Token> tokens = new LinkedList<>();
-            LinkedList<Integer> selectedPath = paths.get(i);
-            List<String> words = graph.words(selectedPath);
+            List<String> words = paths.words(i);
             for (String word : words) {
               tokens.add(new Token("0", word).setLemma("WORD"));
             }
