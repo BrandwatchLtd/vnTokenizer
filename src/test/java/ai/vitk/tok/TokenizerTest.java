@@ -3,6 +3,7 @@ package ai.vitk.tok;
 import static org.junit.Assert.assertTrue;
 
 import ai.vitk.type.Token;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -26,6 +27,10 @@ public class TokenizerTest {
 
     @Test
     public void givenVietnamese_whenTokenizing_thenTokensReturned() {
+        checkJoinedMatches(
+            "mebb:  QUERYTARGET ford QUERYTARGET  everest mới đến malaysia, giá bán cao hơn tại việt nam mebb.cf/mebb- QUERYTARGET ford QUERYTARGET -ever… pic.twitter.com/psb4cldnsi",
+            "mebb : QUERYTARGET ford QUERYTARGET everest mới đến malaysia , giá bán cao hơn tại nam mebb.cf / mebb - QUERYTARGET ford QUERYTARGET - ever pic.twitter.com / psb4cldnsi"
+        );
         checkTokenization(
             "Hà Nội mùa này vắng những cơn mưa",
             "Hà Nội", "mùa", "này", "vắng", "những", "cơn", "mưa"
@@ -72,12 +77,17 @@ public class TokenizerTest {
         );
     }
     
+    private void checkJoinedMatches(String text, String resulting) {
+        final String collect = tokenizer.tokenize(text).stream().map(Token::getWord).collect(Collectors.joining(" "));
+        Assert.assertEquals(resulting,  collect);
+    }
+    
     private boolean checkTokenizationMatches(String text, String... expectedTokens) {
         List<Token> tokens = tokenizer.tokenize(text);
         List<String> actual = tokens.stream()
                 .map(Token::getWord)
                 .map(String::trim)
-                .filter(s -> s.length() > 1 || !s.matches("['\",;\\-:]")) // TODO review why the tokenizer is not removing these
+                // .filter(s -> s.length() > 1 || !s.matches("['\",;\\-:]")) // TODO review why the tokenizer is not removing these
                 .collect(Collectors.toList());
         return Arrays.asList(expectedTokens).equals(actual);
     }
