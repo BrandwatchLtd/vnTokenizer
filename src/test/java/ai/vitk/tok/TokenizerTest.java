@@ -9,14 +9,12 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.io.BufferedReader;
-import java.io.IOException;
 import java.io.InputStream;
 import java.nio.channels.Channels;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.stream.Collectors;
@@ -104,20 +102,20 @@ public class TokenizerTest {
     private static final String FILE = "tokenized.tsv.gz";
     
     @Test
-    public void testMultiThreaded() throws InterruptedException, ExecutionException, IOException {
+    public void givenVietnamese_whenConcurrentlyTokenizing_resultsMatchesSynchronous() throws Exception {
         try(final InputStream stream = new GZIPInputStream(this.getClass().getResourceAsStream(FILE))) {
             Assert.assertNotNull(stream);
             final BufferedReader reader = new BufferedReader(Channels.newReader(Channels.newChannel(stream), "UTF-8"));
             final List<Callable<String[]>> lines = new ArrayList<>();
             int nline = 0;
-            String line = null;
+            String line = null; 
             for(; (line = reader.readLine()) != null; nline++) {
                 if (nline == 0) {
                     continue; // skips header
                 }
                 lines.add(this.checkLineTokenizationMatchesPromise(line));
             }        
-            List<Future<String[]>> all = Executors.newWorkStealingPool().invokeAll(lines);
+            List<Future<String[]>> all = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors() * 2).invokeAll(lines);
             for (Future<String[]> future : all) {
                 final String[] result = future.get();
                 assertEquals(result[0], result[1]);

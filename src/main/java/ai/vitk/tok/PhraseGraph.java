@@ -23,12 +23,12 @@ import java.util.regex.Pattern;
 public class PhraseGraph implements Serializable {
   static boolean verbose = false;
   private static Logger logger = Logger.getLogger(PhraseGraph.class.getName());
-  private static TextNormalizer textNormalizer = new TextNormalizer();
+  private static TextNormalizer NORMALIZER = new TextNormalizer();
   
   private final Dictionary dictionary;
   
   public PhraseGraph() {
-    this(new DefaultDictionary());
+    this(DefaultDictionary.Data.INSTANCE);
   }
   
   public PhraseGraph(final Dictionary dictionary) {
@@ -40,9 +40,9 @@ public class PhraseGraph implements Serializable {
     private final Syllable[] syllables;
     private final List<LinkedList<Integer>> paths;
       
-    GraphPaths(final Syllable[] syllables, final List<LinkedList<Integer>> allPaths) {
+    protected GraphPaths(final Syllable[] syllables, final List<LinkedList<Integer>> paths) {
       this.syllables = syllables;
-      this.paths = allPaths;
+      this.paths = paths;
     }
 
     public final boolean isEmpty() {
@@ -89,7 +89,7 @@ public class PhraseGraph implements Serializable {
      * @param segment
      * @return
      */
-    public String words(final Pair<Integer, Integer> segment) {
+    String words(final Pair<Integer, Integer> segment) {
       final StringBuilder sb = new StringBuilder();
       for (int i = segment.getLeft(); i < segment.getRight(); i++) {
         sb.append(syllables[i]);
@@ -131,7 +131,7 @@ public class PhraseGraph implements Serializable {
       final Syllable[] syllables = Arrays.stream(phrase.split("\\s+"))
         .map(Syllable::new)
         .toArray(Syllable[]::new);
-      if (syllables.length > 128 && verbose) {
+      if (verbose && syllables.length > 128) {
         logger.log(Level.WARNING, "Phrase too long (>= 128 syllables), tokenization may be slow...");
         logger.log(Level.WARNING, phrase);
       }
@@ -242,7 +242,7 @@ public class PhraseGraph implements Serializable {
 
     Syllable(final String original) {
       this.original = original;
-      this.normalised = textNormalizer.normalize(original);
+      this.normalised = NORMALIZER.normalize(original);
     }
   }
   

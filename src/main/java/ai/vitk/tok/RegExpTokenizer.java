@@ -35,12 +35,12 @@ public class RegExpTokenizer implements Serializable {
     Collections.sort(extendedPatterns, Comparator.reverseOrder());
   }
 
-  public RegExpTokenizer(final PhraseGraph graph) {
-      this.graph = graph;
+  public RegExpTokenizer(final Dictionary dictionary) {
+      this.graph = new PhraseGraph(dictionary);
   }
   
-  public RegExpTokenizer(final Dictionary dictionary) {
-      this(new PhraseGraph(dictionary));
+  public RegExpTokenizer() {
+      this.graph = new PhraseGraph();
   }
   
   /**
@@ -48,7 +48,7 @@ public class RegExpTokenizer implements Serializable {
    * @param text a text (plain sentence)
    * @return a list of tokens
    */
-  public synchronized List<Token> tokenize(String text) {
+  public List<Token> tokenize(String text) {
     text = text.trim();
     if (text.isEmpty())
       return new LinkedList<>();

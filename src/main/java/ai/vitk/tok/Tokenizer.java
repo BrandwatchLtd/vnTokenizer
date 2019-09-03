@@ -22,10 +22,8 @@ public class Tokenizer implements Serializable {
   
   private final RegExpTokenizer regExpTokenizer; 
   
-  private static final PhraseGraph DEFAULT = new PhraseGraph();
-  
   public Tokenizer() {
-    this.regExpTokenizer = new RegExpTokenizer(DEFAULT);
+    this.regExpTokenizer = new RegExpTokenizer();
   }
 
   public Tokenizer(Dictionary dictionary) {

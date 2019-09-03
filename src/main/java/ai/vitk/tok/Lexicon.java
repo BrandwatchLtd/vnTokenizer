@@ -20,7 +20,7 @@ import java.util.LinkedList;
 public class Lexicon implements Serializable {
   private Node root;
   private int numNodes = 0;
-  private ObjectFactory factory = new ObjectFactory();
+  private static ObjectFactory FACTORY = new ObjectFactory();
   static final Lexicon INSTANCE = new Lexicon().load(Lexicon.class.getResourceAsStream("/tok/lexicon.xml"))
       .additionalLexicon("/tok/provinces.txt").additionalLexicon("/tok/districts.txt")
       .additionalLexicon("/tok/vcm.txt");
@@ -203,7 +203,7 @@ public class Lexicon implements Serializable {
   }
 
   private N createN(Node node) {
-    N n = factory.createN();
+    N n = FACTORY.createN();
     n.setC(String.valueOf(node.c));
     for (Node child : node.children) {
       N c = createN(child);
