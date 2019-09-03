@@ -1,5 +1,6 @@
 package ai.vitk.tok;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import ai.vitk.type.Token;
@@ -7,6 +8,11 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.channels.Channels;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -14,7 +20,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
+import java.util.zip.GZIPInputStream;
 
 public class TokenizerTest {
 
@@ -27,10 +33,6 @@ public class TokenizerTest {
 
     @Test
     public void givenVietnamese_whenTokenizing_thenTokensReturned() {
-        checkJoinedMatches(
-            "mebb:  QUERYTARGET ford QUERYTARGET  everest mới đến malaysia, giá bán cao hơn tại việt nam mebb.cf/mebb- QUERYTARGET ford QUERYTARGET -ever… pic.twitter.com/psb4cldnsi",
-            "mebb : QUERYTARGET ford QUERYTARGET everest mới đến malaysia , giá bán cao hơn tại nam mebb.cf / mebb - QUERYTARGET ford QUERYTARGET - ever pic.twitter.com / psb4cldnsi"
-        );
         checkTokenization(
             "Hà Nội mùa này vắng những cơn mưa",
             "Hà Nội", "mùa", "này", "vắng", "những", "cơn", "mưa"
@@ -39,17 +41,21 @@ public class TokenizerTest {
             "Việt Nam là quốc gia nằm ở phía Đông bán đảo Đông Dương thuộc khu vực Đông Nam Á",
             "Việt Nam", "là", "quốc gia", "nằm", "ở", "phía", "Đông", "bán đảo", "Đông Dương", "thuộc", "khu vực", "Đông Nam", "Á"
         );
-        checkTokenizationFormatted(
-            "Bà Hồ Thị Kim Thoa nghỉ hưu từ 1/9,CPI tháng 8 tăng 0,92% Bà Hồ Thị Kim Thoa nghỉ hưu từ 1/9, CPI tháng 8 tăng 0,92% , cơn sốt nhập \"trâu cày\" Bitcoin, Bão Harvey tác động nặng nề kinh tế Mỹ, Tổng giám đốc Habeco bị \"truất\" quyền điều hành",
-            "Bà, Hồ Thị Kim Thoa, nghỉ, hưu, từ, 1/9, CPI, tháng, 8, tăng, 0,92%, Bà, Hồ Thị Kim Thoa, nghỉ, hưu, từ, 1/9, CPI, tháng, 8, tăng, 0,92%, cơn sốt, nhập, trâu, cày, Bitcoin, Bão Harvey, tác động, nặng nề, kinh tế, Mỹ, Tổng giám đốc, Habeco, bị, truất, quyền, điều hành"
+    }
+    
+    @Test
+    public void givenVietnamese_whenTokenizing_thenJoinedMatches() {
+        checkJoinedMatches(
+            "\ntest\n\n\ntest\n\n",
+            "test test"
         );
-        checkTokenizationFormatted(
-            "Anh chính thức khởi động tiến trình Brexit Anh chính thức khởi động tiến trình Brexit; Tổng thống bị phế truất Park Guen-hye bị bắt; Bé gái người Việt bị sát hại ở Nhật và nỗi lo nơi xứ người; Trump bỏ chính sách xanh của Obama; Những vấn đề gai góc trên bàn nghị sự Trump - Tập; Bộ ngoại giao Việt Nam lên tiếng vụ bé gái Việt bị sát hại tại Nhật; Xả súng tại hộp đêm ở Mỹ; Chân dung Trưởng Đặc khu HonHãng bay đồng loạt tăng phí,giá điện sắp tăng sau 2 năm đứng im",
-            "Anh, chính thức, khởi động, tiến trình, Brexit Anh, chính thức, khởi động, tiến trình, Brexit, Tổng thống, bị, phế truất, Park Guen, hye, bị, bắt, Bé, gái, người, Việt, bị, sát hại, ở, Nhật, và, nỗi, lo, nơi, xứ, người, Trump, bỏ, chính sách, xanh, của, Obama, Những, vấn đề, gai góc, trên, bàn, nghị sự, Trump, Tập, Bộ, ngoại giao, Việt Nam, lên tiếng, vụ, bé, gái, Việt, bị, sát hại, tại, Nhật, Xả, súng, tại, hộp đêm, ở, Mỹ, Chân dung, Trưởng Đặc khu, HonHãng, bay, đồng loạt, tăng, phí, giá, điện, sắp, tăng, sau, 2, năm, đứng, im"
+        checkJoinedMatches(
+            "phó tổng  QUERYTARGET evn QUERYTARGET  khẳng định: ‘giá điện sẽ tiếp tục tăng gấp đôi” - hà nội news vi.nnews.space/pho-tong- QUERYTARGET evn QUERYTARGET -k…",
+            "phó_tổng QUERYTARGET evn QUERYTARGET khẳng_định : ‘ giá điện sẽ tiếp_tục tăng gấp đôi ” - hà_nội news vi.nnews.space / pho-tong - QUERYTARGET evn QUERYTARGET - k …"
         );
-        checkTokenizationFormatted(
-            " HÀNG RÀO PHÂN CÁCH INOX - CỘT CHẮN INOX- Hàng rào phân cách inox trắng- Hàng rào phân cách inox vàng- Hàng rào phân cách inox trắng dây chắn căng xanh, đỏ- Cột chắn di động inox vàng- Cột chắn di động inox trắng dây chắn căng xanh, đỏ- Cột chắn di động inox vàng dây chắn căng xanh, đỏ- Hàng rào inox, cột phân luồng, dải phân cách mềm, cột inox, cột chắn đường điTAG:thung rac, thùng rác, cot chan, cot chan inox, cột chăn inox, bien bang menu, bảng menu, bang welcome, sọt rac, dung cu, thiet bi ve sinh, cay, cay lau, cây lau nhà, thùng rac đá hoa cương, thung rác inox, thùng rác nhựa, cột chắn dây nhung, cột chắn dây căng, xe dọn phòng, thùng rác 240L, thùng rac composite, bien bao đang làm vệ sinh, biển báo chống trơn trượt, xe lau nhà, bộ gạt kính, cây lau kính, cây lau nhà giá",
-            "HÀNG, RÀO, PHÂN, CÁCH, INOX, CỘT, CHẮN, INOX, Hàng rào, phân cách, inox, trắng, Hàng rào, phân cách, inox, vàng, Hàng rào, phân cách, inox, trắng, dây, chắn, căng, xanh, đỏ, Cột, chắn, di động, inox, vàng, Cột, chắn, di động, inox, trắng, dây, chắn, căng, xanh, đỏ, Cột, chắn, di động, inox, vàng, dây, chắn, căng, xanh, đỏ, Hàng rào, inox, cột, phân luồng, dải phân cách, mềm, cột, inox, cột, chắn, đường, điTAG, thung, rac, thùng, rác, cot, chan, cot, chan, inox, cột, chăn, inox, bien, bang, menu, bảng, menu, bang, welcome, sọt, rac, dung, cu, thiet, bi ve, sinh, cay, cay, lau, cây lau nhà, thùng, rac, đá hoa cương, thung, rác, inox, thùng, rác, nhựa, cột, chắn, dây, nhung, cột, chắn, dây, căng, xe, dọn, phòng, thùng, rác, 240L, thùng, rac, composite, bien, bao, đang, làm, vệ sinh, biển báo, chống, trơn, trượt, xe, lau, nhà, bộ, gạt, kính, cây, lau, kính, cây lau nhà, giá"
+        checkJoinedMatches(
+            "mebb:  QUERYTARGET ford QUERYTARGET  everest mới đến malaysia, giá bán cao hơn tại việt nam mebb.cf/mebb- QUERYTARGET ford QUERYTARGET -ever… pic.twitter.com/psb4cldnsi",
+            "mebb : QUERYTARGET ford QUERYTARGET everest mới đến malaysia , giá bán cao hơn tại việt_nam mebb.cf / mebb - QUERYTARGET ford QUERYTARGET - ever … pic.twitter.com / psb4cldnsi"
         );
     }
 
@@ -62,24 +68,21 @@ public class TokenizerTest {
         );
     }
 
-    private void checkTokenizationFormatted(String text, String formatted) {
-        assertTrue(checkTokenizationMatchesFormatted(text, formatted));
-    }
-    
     private void checkTokenization(String text, String... expectedTokens) {
         assertTrue(checkTokenizationMatches(text, expectedTokens));
     }
 
-    private boolean checkTokenizationMatchesFormatted(String text, String formatted) {
-        return checkTokenizationMatches(
-            text, 
-            Arrays.asList(formatted.split(",\\s+")).stream().map(String::trim).filter(s -> s.length() > 0).toArray(String[]::new)
-        );
-    }
-    
     private void checkJoinedMatches(String text, String resulting) {
-        final String collect = tokenizer.tokenize(text).stream().map(Token::getWord).collect(Collectors.joining(" "));
-        Assert.assertEquals(resulting,  collect);
+        final String actual = tokenize(text);
+        Assert.assertEquals(resulting,  actual);
+    }
+
+    private String tokenize(String text) {
+        final String actual = tokenizer.tokenize(text).stream()
+            .map(Token::getWord)
+            .map(token -> token.replaceAll("\\s+", "_"))
+            .collect(Collectors.joining(" "));
+        return actual;
     }
     
     private boolean checkTokenizationMatches(String text, String... expectedTokens) {
@@ -87,47 +90,38 @@ public class TokenizerTest {
         List<String> actual = tokens.stream()
                 .map(Token::getWord)
                 .map(String::trim)
-                // .filter(s -> s.length() > 1 || !s.matches("['\",;\\-:]")) // TODO review why the tokenizer is not removing these
                 .collect(Collectors.toList());
         return Arrays.asList(expectedTokens).equals(actual);
     }
 
-    private Callable<Boolean> checkTokenizationMatchesPromise(int idx) {
-        switch (idx % 5) {
-            case 0:
-                return () -> this.checkTokenizationMatches(
-                    "Direct message để được chúng mình tư vấn kỹ hơn nhé", 
-                    "Direct","message", "để", "được", "chúng mình", "tư vấn", "kỹ", "hơn", "nhé"
-                );
-            case 1:
-                return () -> this.checkTokenizationMatches(
-                    "Việt Nam là quốc gia nằm ở phía Đông bán đảo Đông Dương thuộc khu vực Đông Nam Á",
-                    "Việt Nam", "là", "quốc gia", "nằm", "ở", "phía", "Đông", "bán đảo", "Đông Dương", "thuộc", "khu vực", "Đông Nam", "Á"
-                );
-            case 2:
-                return () -> this.checkTokenizationMatchesFormatted(
-                    "Anh chính thức khởi động tiến trình Brexit Anh chính thức khởi động tiến trình Brexit; Tổng thống bị phế truất Park Guen-hye bị bắt; Bé gái người Việt bị sát hại ở Nhật và nỗi lo nơi xứ người; Trump bỏ chính sách xanh của Obama; Những vấn đề gai góc trên bàn nghị sự Trump - Tập; Bộ ngoại giao Việt Nam lên tiếng vụ bé gái Việt bị sát hại tại Nhật; Xả súng tại hộp đêm ở Mỹ; Chân dung Trưởng Đặc khu HonHãng bay đồng loạt tăng phí,giá điện sắp tăng sau 2 năm đứng im",
-                    "Anh, chính thức, khởi động, tiến trình, Brexit Anh, chính thức, khởi động, tiến trình, Brexit, Tổng thống, bị, phế truất, Park Guen, hye, bị, bắt, Bé, gái, người, Việt, bị, sát hại, ở, Nhật, và, nỗi, lo, nơi, xứ, người, Trump, bỏ, chính sách, xanh, của, Obama, Những, vấn đề, gai góc, trên, bàn, nghị sự, Trump, Tập, Bộ, ngoại giao, Việt Nam, lên tiếng, vụ, bé, gái, Việt, bị, sát hại, tại, Nhật, Xả, súng, tại, hộp đêm, ở, Mỹ, Chân dung, Trưởng Đặc khu, HonHãng, bay, đồng loạt, tăng, phí, giá, điện, sắp, tăng, sau, 2, năm, đứng, im"
-                    );
-            case 3:
-                return () -> this.checkTokenizationMatchesFormatted(
-                    " HÀNG RÀO PHÂN CÁCH INOX - CỘT CHẮN INOX- Hàng rào phân cách inox trắng- Hàng rào phân cách inox vàng- Hàng rào phân cách inox trắng dây chắn căng xanh, đỏ- Cột chắn di động inox vàng- Cột chắn di động inox trắng dây chắn căng xanh, đỏ- Cột chắn di động inox vàng dây chắn căng xanh, đỏ- Hàng rào inox, cột phân luồng, dải phân cách mềm, cột inox, cột chắn đường điTAG:thung rac, thùng rác, cot chan, cot chan inox, cột chăn inox, bien bang menu, bảng menu, bang welcome, sọt rac, dung cu, thiet bi ve sinh, cay, cay lau, cây lau nhà, thùng rac đá hoa cương, thung rác inox, thùng rác nhựa, cột chắn dây nhung, cột chắn dây căng, xe dọn phòng, thùng rác 240L, thùng rac composite, bien bao đang làm vệ sinh, biển báo chống trơn trượt, xe lau nhà, bộ gạt kính, cây lau kính, cây lau nhà giá",
-                    "HÀNG, RÀO, PHÂN, CÁCH, INOX, CỘT, CHẮN, INOX, Hàng rào, phân cách, inox, trắng, Hàng rào, phân cách, inox, vàng, Hàng rào, phân cách, inox, trắng, dây, chắn, căng, xanh, đỏ, Cột, chắn, di động, inox, vàng, Cột, chắn, di động, inox, trắng, dây, chắn, căng, xanh, đỏ, Cột, chắn, di động, inox, vàng, dây, chắn, căng, xanh, đỏ, Hàng rào, inox, cột, phân luồng, dải phân cách, mềm, cột, inox, cột, chắn, đường, điTAG, thung, rac, thùng, rác, cot, chan, cot, chan, inox, cột, chăn, inox, bien, bang, menu, bảng, menu, bang, welcome, sọt, rac, dung, cu, thiet, bi ve, sinh, cay, cay, lau, cây lau nhà, thùng, rac, đá hoa cương, thung, rác, inox, thùng, rác, nhựa, cột, chắn, dây, nhung, cột, chắn, dây, căng, xe, dọn, phòng, thùng, rác, 240L, thùng, rac, composite, bien, bao, đang, làm, vệ sinh, biển báo, chống, trơn, trượt, xe, lau, nhà, bộ, gạt, kính, cây, lau, kính, cây lau nhà, giá"
-                );
-            default: // :-(
-                return () -> this.checkTokenizationMatches(
-                    "Direct message để được chúng mình tư vấn kỹ hơn nhé", 
-                    "Direct","message", "để", "được", "chúng mình", "tư vấn", "kỹ", "hơn", "nhé"
-                );
-        }
+    private Callable<String[]> checkLineTokenizationMatchesPromise(final String line) {
+        return () -> {
+            final String[] parts = line.split("\\t");
+            return new String[] { parts[1], this.tokenize(parts[0])};
+        };
     }
     
+    private static final String FILE = "tokenized.tsv.gz";
+    
     @Test
-    public void testMultiThreaded() throws InterruptedException, ExecutionException {
-        List<Callable<Boolean>> r = IntStream.range(0, 10000).mapToObj(this::checkTokenizationMatchesPromise).collect(Collectors.toList());
-        List<Future<Boolean>> all = Executors.newFixedThreadPool(100).invokeAll(r);
-        for (Future<Boolean> future : all) {
-            assertTrue(future.get());
+    public void testMultiThreaded() throws InterruptedException, ExecutionException, IOException {
+        try(final InputStream stream = new GZIPInputStream(this.getClass().getResourceAsStream(FILE))) {
+            Assert.assertNotNull(stream);
+            final BufferedReader reader = new BufferedReader(Channels.newReader(Channels.newChannel(stream), "UTF-8"));
+            final List<Callable<String[]>> lines = new ArrayList<>();
+            int nline = 0;
+            String line = null;
+            for(; (line = reader.readLine()) != null; nline++) {
+                if (nline == 0) {
+                    continue; // skips header
+                }
+                lines.add(this.checkLineTokenizationMatchesPromise(line));
+            }        
+            List<Future<String[]>> all = Executors.newWorkStealingPool().invokeAll(lines);
+            for (Future<String[]> future : all) {
+                final String[] result = future.get();
+                assertEquals(result[0], result[1]);
+            }
         }
     }
 
