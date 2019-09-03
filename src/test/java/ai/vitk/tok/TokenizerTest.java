@@ -115,7 +115,7 @@ public class TokenizerTest {
                 }
                 lines.add(this.checkLineTokenizationMatchesPromise(line));
             }        
-            List<Future<String[]>> all = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors() * 2).invokeAll(lines);
+            List<Future<String[]>> all = Executors.newWorkStealingPool().invokeAll(lines);
             for (Future<String[]> future : all) {
                 final String[] result = future.get();
                 assertEquals(result[0], result[1]);
