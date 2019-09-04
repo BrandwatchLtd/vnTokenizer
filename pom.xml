@@ -30,6 +30,23 @@
     </dependencyManagement>
 
     <dependencies>
+    	<!-- JAVAX deps -->
+        <dependency>
+          <groupId>javax.xml.bind</groupId>
+          <artifactId>jaxb-api</artifactId>
+          <version>2.3.0</version>
+        </dependency>
+        <dependency>
+          <groupId>com.sun.xml.bind</groupId>
+          <artifactId>jaxb-core</artifactId>
+          <version>2.3.0</version>
+        </dependency>
+        <dependency>
+          <groupId>com.sun.xml.bind</groupId>
+          <artifactId>jaxb-impl</artifactId>
+          <version>2.3.0</version>
+        </dependency>
+        <!--  test -->    	
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
