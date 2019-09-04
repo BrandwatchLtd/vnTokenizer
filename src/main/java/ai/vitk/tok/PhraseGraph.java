@@ -167,11 +167,11 @@ public class PhraseGraph implements Serializable {
    * @return a list of paths, each path is a linked list of vertices.
    */
   public GraphPaths shortestPaths(final String text) {
-    final GraphPaths syllablePaths = this.makeShortestPaths(text);
+    final GraphPaths paths = this.makeShortestPaths(text);
     if (verbose) {
-      if (syllablePaths.paths.size() > 16) {
+      if (paths.paths.size() > 16) {
         final StringBuilder phrase = new StringBuilder();
-        for (final Syllable syllable : syllablePaths.syllables) {
+        for (final Syllable syllable : paths.syllables) {
           phrase.append(syllable.original);
           phrase.append(' ');
         }
@@ -179,12 +179,12 @@ public class PhraseGraph implements Serializable {
             Level.WARNING, 
             String.format(
                 "This phrase is too ambiguous, giving %d shortest paths!\n\t%s\n",
-                syllablePaths.paths.size(), phrase.toString().trim()
+                paths.paths.size(), phrase.toString().trim()
             )
         );
       }
     }
-    return syllablePaths;
+    return paths;
   }
 
   static final class TextNormalizer implements Serializable {
