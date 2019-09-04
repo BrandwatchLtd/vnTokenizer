@@ -20,14 +20,14 @@ import java.util.stream.Collectors;
  */
 public class Tokenizer implements Serializable {
   
-  RegExpTokenizer regExpTokenizer = new RegExpTokenizer(); 
+  private final RegExpTokenizer regExpTokenizer; 
   
   public Tokenizer() {
-    this(new DefaultDictionary());
+    this.regExpTokenizer = new RegExpTokenizer();
   }
 
   public Tokenizer(Dictionary dictionary) {
-    regExpTokenizer.setDictionary(dictionary);
+    this.regExpTokenizer = new RegExpTokenizer(dictionary);
   }
 
   /**
@@ -35,7 +35,7 @@ public class Tokenizer implements Serializable {
    * @param text a raw text
    * @return a list of segmentations.
    */
-  public synchronized List<List<Token>> iterate(String text) {
+  public List<List<Token>> iterate(String text) {
     List<List<Token>> candidates = regExpTokenizer.iterate(text);
     return candidates.stream().map(candidate -> split(merge(candidate))).collect(Collectors.toList());
   }
@@ -45,7 +45,7 @@ public class Tokenizer implements Serializable {
    * @param text a raw text.
    * @return a list of tokens.
    */
-  public synchronized List<Token> tokenize(String text) {
+  public List<Token> tokenize(String text) {
     List<Token> tokens = regExpTokenizer.tokenize(text);
     return split(merge(tokens));
   }
@@ -107,7 +107,7 @@ public class Tokenizer implements Serializable {
     return result;
   }
 
-  private synchronized List<Token> merge(List<Token> tokens, int i) {
+  private List<Token> merge(List<Token> tokens, int i) {
     if (i > tokens.size() - 1)
       return new LinkedList<>();
     boolean yes = false;
@@ -146,7 +146,7 @@ public class Tokenizer implements Serializable {
    * @param text a text.
    * @return a list of tokens.
    */
-  public synchronized List<Token> run(boolean isEnglish, String text) {
+  public List<Token> run(boolean isEnglish, String text) {
     if (isEnglish)
       return RegExpTokenizer.split(text);
     return tokenize(text);

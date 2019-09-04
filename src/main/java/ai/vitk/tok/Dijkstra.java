@@ -24,7 +24,7 @@ public class Dijkstra implements Serializable {
 	 * For each vertex v, we store a list of vertices u where (u, v) is an edge
 	 * of the graph.  
 	 */
-	private Map<Integer, LinkedList<Integer>> edges = Collections.synchronizedMap(new HashMap<>());
+	private Map<Integer, LinkedList<Integer>> edges = new HashMap<>();
 
 	private float[] distance;
 	private int[] previous;
@@ -34,7 +34,6 @@ public class Dijkstra implements Serializable {
 	 * @param edges
 	 */
 	public Dijkstra(Map<Integer, LinkedList<Integer>> edges) {
-    synchronized (this) {
       this.edges = edges;
       n = edges.size();
       distance = new float[n];
@@ -62,7 +61,6 @@ public class Dijkstra implements Serializable {
           }
         }
       }
-    }
 	}
 	
 	/**
@@ -84,7 +82,7 @@ public class Dijkstra implements Serializable {
 	 * and vertex <code>n-1</code>.
 	 * @return all shortest paths.
 	 */
-	public synchronized List<LinkedList<Integer>> shortestPaths() {
+	public List<LinkedList<Integer>> shortestPaths() {
 		return shortestPaths(n-1);
 	}
 	
@@ -94,7 +92,7 @@ public class Dijkstra implements Serializable {
 	 * @param v a vertex
 	 * @return all shortest paths
 	 */
-	private synchronized List<LinkedList<Integer>> shortestPaths(int v) {
+	private List<LinkedList<Integer>> shortestPaths(int v) {
 		LinkedList<Integer> nodes = edges.get(v);
 		if (nodes.isEmpty()) {
 			LinkedList<Integer> stop = new LinkedList<>();
